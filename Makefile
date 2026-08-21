@@ -26,6 +26,14 @@ base:
 
 up: base
 	@test -n "$(DIR)" || (echo "Entrega E=$(E) não existe"; exit 1)
+	@# As entregas reaproveitam as mesmas sub-redes (10.0.10.0/24 etc.) e o Docker
+	@# recusa duas bridges com faixas sobrepostas. Derrubamos as outras antes de
+	@# subir esta — não há nada a perder num contêiner: o trabalho está nos arquivos.
+	@for d in e1-* e2-* e3-* e4-* e5-*; do \
+	  if [ "$$d" != "$(DIR)" ]; then \
+	    (cd $$d && $(COMPOSE) down -v --remove-orphans >/dev/null 2>&1) || true; \
+	  fi; \
+	done
 	cd $(DIR) && $(COMPOSE) up -d
 	@echo "Topologia da entrega $(E) no ar, a partir de $(CURDIR)/$(DIR)"
 	@echo "Rode: make verificar E=$(E)"
