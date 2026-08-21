@@ -1,10 +1,23 @@
 # ENTREGA 4 — A rota se refaz sozinha
 #
-# Dois caminhos entre A e B: trânsito 1 e trânsito 2. Com rota estática só um
-# deles é usado, e quando ele cai a rede morre. Sua tarefa é fazer a rede
-# escolher sozinha o caminho que sobrou.
+# Dois caminhos entre A e B, e eles NÃO custam igual:
+#
+#         ┌────────── t1 ──────────┐        1 salto  (mais curto)
+#  host-a ─ r1                    r2 ─ host-b
+#         └── t2 ── r3 ── t3 ─────┘        2 saltos (o desvio)
+#
+# O vetor de distância mede caminho em SALTOS, então o t1 vence. Derrube o t1 e
+# a rede precisa mesmo recalcular — é essa recomputação que vocês vão cronometrar.
 
 name: e4
+
+x-router: &router
+  build: .
+  image: redes-lab-bird:1
+  cap_add: [NET_ADMIN, NET_RAW]
+  sysctls: ["net.ipv4.ip_forward=1"]
+  volumes: [".:/lab:ro"]
+  command: ["sh","/lab/iniciar-roteador.sh"]
 
 services:
   host-a:
@@ -22,35 +35,34 @@ services:
     networks: {seg-b: {ipv4_address: 10.0.20.10}}
 
   r1:
-    build: .
-    image: redes-lab-bird:1
+    <<: *router
     container_name: e4-r1
     environment: {ROLE: r1}
-    cap_add: [NET_ADMIN, NET_RAW]
-    sysctls: ["net.ipv4.ip_forward=1"]
-    volumes: [".:/lab:ro"]
-    command: ["sh","/lab/iniciar-roteador.sh"]
     networks:
       seg-a:  {ipv4_address: 10.0.10.254}
       seg-t1: {ipv4_address: 10.0.30.11}
       seg-t2: {ipv4_address: 10.0.40.11}
 
   r2:
-    build: .
-    image: redes-lab-bird:1
+    <<: *router
     container_name: e4-r2
     environment: {ROLE: r2}
-    cap_add: [NET_ADMIN, NET_RAW]
-    sysctls: ["net.ipv4.ip_forward=1"]
-    volumes: [".:/lab:ro"]
-    command: ["sh","/lab/iniciar-roteador.sh"]
     networks:
       seg-b:  {ipv4_address: 10.0.20.254}
       seg-t1: {ipv4_address: 10.0.30.12}
-      seg-t2: {ipv4_address: 10.0.40.12}
+      seg-t3: {ipv4_address: 10.0.50.12}
+
+  r3:                      # existe só para alongar o caminho reserva
+    <<: *router
+    container_name: e4-r3
+    environment: {ROLE: r3}
+    networks:
+      seg-t2: {ipv4_address: 10.0.40.13}
+      seg-t3: {ipv4_address: 10.0.50.13}
 
 networks:
   seg-a:  {driver: bridge, internal: true, ipam: {config: [{subnet: 10.0.10.0/24}]}}
   seg-b:  {driver: bridge, internal: true, ipam: {config: [{subnet: 10.0.20.0/24}]}}
   seg-t1: {driver: bridge, internal: true, ipam: {config: [{subnet: 10.0.30.0/24}]}}
   seg-t2: {driver: bridge, internal: true, ipam: {config: [{subnet: 10.0.40.0/24}]}}
+  seg-t3: {driver: bridge, internal: true, ipam: {config: [{subnet: 10.0.50.0/24}]}}
