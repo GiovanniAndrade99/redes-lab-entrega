@@ -14,10 +14,22 @@ e dá a cada aluno uma máquina Linux com root só dela.
 
 ## Começando
 
+Construa a imagem do laboratório — uma vez por sessão do Cloud Shell:
+
 ```bash
-make base            # constrói a imagem do laboratório (uma vez por sessão)
-make up E=1          # sobe a topologia da entrega 1
-make verificar E=1   # roda as provas
+make base
+```
+
+Suba a topologia da primeira entrega:
+
+```bash
+make up E=1
+```
+
+Rode as provas:
+
+```bash
+make verificar E=1
 ```
 
 `make verificar` **começa vermelho de propósito**. O laboratório vem
