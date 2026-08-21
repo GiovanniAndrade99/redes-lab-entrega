@@ -1,0 +1,56 @@
+# ENTREGA 4 — A rota se refaz sozinha
+#
+# Dois caminhos entre A e B: trânsito 1 e trânsito 2. Com rota estática só um
+# deles é usado, e quando ele cai a rede morre. Sua tarefa é fazer a rede
+# escolher sozinha o caminho que sobrou.
+
+name: e4
+
+services:
+  host-a:
+    image: redes-lab-base:1
+    container_name: e4-host-a
+    cap_add: [NET_ADMIN]
+    command: ["sh","-c","ip route del default 2>/dev/null||true; ip route add 10.0.20.0/24 via 10.0.10.254; exec sleep infinity"]
+    networks: {seg-a: {ipv4_address: 10.0.10.10}}
+
+  host-b:
+    image: redes-lab-base:1
+    container_name: e4-host-b
+    cap_add: [NET_ADMIN]
+    command: ["sh","-c","ip route del default 2>/dev/null||true; ip route add 10.0.10.0/24 via 10.0.20.254; exec sleep infinity"]
+    networks: {seg-b: {ipv4_address: 10.0.20.10}}
+
+  r1:
+    build: .
+    image: redes-lab-bird:1
+    container_name: e4-r1
+    environment: {ROLE: r1}
+    cap_add: [NET_ADMIN, NET_RAW]
+    sysctls: ["net.ipv4.ip_forward=1"]
+    volumes: [".:/lab:ro"]
+    command: ["sh","/lab/iniciar-roteador.sh"]
+    networks:
+      seg-a:  {ipv4_address: 10.0.10.254}
+      seg-t1: {ipv4_address: 10.0.30.1}
+      seg-t2: {ipv4_address: 10.0.40.1}
+
+  r2:
+    build: .
+    image: redes-lab-bird:1
+    container_name: e4-r2
+    environment: {ROLE: r2}
+    cap_add: [NET_ADMIN, NET_RAW]
+    sysctls: ["net.ipv4.ip_forward=1"]
+    volumes: [".:/lab:ro"]
+    command: ["sh","/lab/iniciar-roteador.sh"]
+    networks:
+      seg-b:  {ipv4_address: 10.0.20.254}
+      seg-t1: {ipv4_address: 10.0.30.2}
+      seg-t2: {ipv4_address: 10.0.40.2}
+
+networks:
+  seg-a:  {driver: bridge, internal: true, ipam: {config: [{subnet: 10.0.10.0/24}]}}
+  seg-b:  {driver: bridge, internal: true, ipam: {config: [{subnet: 10.0.20.0/24}]}}
+  seg-t1: {driver: bridge, internal: true, ipam: {config: [{subnet: 10.0.30.0/24}]}}
+  seg-t2: {driver: bridge, internal: true, ipam: {config: [{subnet: 10.0.40.0/24}]}}
