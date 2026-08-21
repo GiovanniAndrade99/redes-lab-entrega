@@ -45,9 +45,17 @@ case "$o" in
   *) nok "isolamento: falhou, mas NÃO por 'Network is unreachable'"; obs "$(echo "$o" | tail -2 | tr '\n' ' ')";;
 esac
 
-o=$(docker exec e1-host-b1 curl -s -m 2 http://10.0.10.20:8080/ 2>&1; echo "rc=$?")
-case "$o" in *"srv-a"*) nok "isolamento QUEBRADO: B chegou no servidor de A"; obs "$o";;
-    *) ok "isolamento: B não chega no servidor de A"; obs "curl terminou sem resposta ($(echo "$o" | tail -1))";; esac
+# Este teste SÓ vale se host-b1 existir. Sem essa trava ele ficava verde
+# justamente porque o contêiner não existia — um curl que nunca aconteceu
+# "provando" isolamento. Ausência de sinal não é prova.
+if docker inspect -f '{{.State.Running}}' e1-host-b1 2>/dev/null | grep -q true; then
+  o=$(docker exec e1-host-b1 curl -s -m 2 http://10.0.10.20:8080/ 2>&1; echo "rc=$?")
+  case "$o" in *"srv-a"*) nok "isolamento QUEBRADO: B chegou no servidor de A"; obs "$o";;
+      *) ok "isolamento: B não chega no servidor de A"; obs "curl terminou sem resposta ($(echo "$o" | tail -1))";; esac
+else
+  nok "isolamento B→A: NÃO AVALIADO"
+  obs "host-b1 não está no ar; sem ele este teste não prova nada"
+fi
 
 echo
 if [ "$falhas" -eq 0 ]; then
