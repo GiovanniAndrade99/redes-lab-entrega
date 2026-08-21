@@ -26,19 +26,19 @@ services:
   replica1:
     <<: *replica
     container_name: e3-replica1
-    command: ["sh","-c","ip route del default 2>/dev/null||true; echo replica1 > /srv/index.html; exec busybox httpd -f -p 8080 -h /srv"]
+    command: ["sh","-c","ip route del default 2>/dev/null||true; echo replica1 > /srv/index.html; exec httpd -f -p 8080 -h /srv"]
     networks: {seg-b: {ipv4_address: 10.0.20.21}}
 
   replica2:
     <<: *replica
     container_name: e3-replica2
-    command: ["sh","-c","ip route del default 2>/dev/null||true; echo replica2 > /srv/index.html; exec busybox httpd -f -p 8080 -h /srv"]
+    command: ["sh","-c","ip route del default 2>/dev/null||true; echo replica2 > /srv/index.html; exec httpd -f -p 8080 -h /srv"]
     networks: {seg-b: {ipv4_address: 10.0.20.22}}
 
   replica3:
     <<: *replica
     container_name: e3-replica3
-    command: ["sh","-c","ip route del default 2>/dev/null||true; echo replica3 > /srv/index.html; exec busybox httpd -f -p 8080 -h /srv"]
+    command: ["sh","-c","ip route del default 2>/dev/null||true; echo replica3 > /srv/index.html; exec httpd -f -p 8080 -h /srv"]
     networks: {seg-b: {ipv4_address: 10.0.20.23}}
 
   router:

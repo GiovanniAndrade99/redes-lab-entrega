@@ -4,7 +4,7 @@ echo "area restrita do sistema" > /srv/index.html
 
 # Versão desprotegida, na porta 8080. Continua no ar de propósito: o trabalho
 # é mostrar a diferença entre as duas, não fingir que a insegura não existe.
-busybox httpd -f -p 8080 -h /srv &
+httpd -f -p 8080 -h /srv &
 
 # ---------- TAREFA DO GRUPO ----------
 # Suba a MESMA área restrita protegida por TLS, na porta 8443. Duas linhas:

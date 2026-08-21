@@ -16,6 +16,10 @@ for c in e1-host-a1 e1-host-a2 e1-srv-a e1-host-b1 e1-host-b2; do
     ok "contêiner $c no ar"; obs "$ip"
   else
     nok "contêiner $c NÃO existe ou não está no ar"
+    # Sem isto, um servidor que morre na largada aparece só como um curl vazio
+    # lá embaixo — erro real, pista nenhuma.
+    log=$(docker logs --tail 2 "$c" 2>&1 | tr '\n' ' ')
+    [ -n "$log" ] && obs "última saída do contêiner: $log" || obs "o contêiner nem chegou a existir (make up E=1?)"
   fi
 done
 echo

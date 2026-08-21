@@ -36,7 +36,7 @@ services:
       - |
         ip route del default 2>/dev/null || true
         echo "servidor srv-a, segmento A, 10.0.10.20" > /srv/index.html
-        exec busybox httpd -f -p 8080 -h /srv
+        exec httpd -f -p 8080 -h /srv
     networks: {seg-a: {ipv4_address: 10.0.10.20}}
 
   # ------------------------------------------------------------------

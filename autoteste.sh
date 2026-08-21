@@ -20,6 +20,15 @@ docker build -t redes-lab-base:1 base/ >/dev/null 2>&1 && ok "imagem base constr
 
 if docker run --rm redes-lab-base:1 sh -c 'tcpdump --version' >/dev/null 2>&1; then ok "tcpdump existe na imagem"; else nok "tcpdump" "pacote ausente"; fi
 
+# Não basta o binário existir: tem de SERVIR. O applet httpd não vem no busybox
+# principal do Alpine, e a falha aparecia só como um curl vazio três testes
+# adiante. Aqui sobe e busca de verdade.
+if docker run --rm redes-lab-base:1 \
+     sh -c 'echo servido > /srv/i.html; httpd -p 8099 -h /srv; sleep 1; curl -s -m 2 http://127.0.0.1:8099/i.html' 2>/dev/null \
+     | grep -q servido; then
+  ok "servidor HTTP sobe e responde dentro do contêiner"
+else nok "httpd" "não serviu — E1, E3 e E5 morrem em silêncio"; fi
+
 if docker run --rm --cap-add NET_RAW redes-lab-base:1 sh -c 'timeout 2 tcpdump -i any -c1 >/dev/null 2>&1; [ $? -le 124 ]'; then
   ok "tcpdump consegue abrir a interface (NET_RAW efetivo)"
 else nok "captura" "NET_RAW negado — E2 e E5 não funcionam"; fi
