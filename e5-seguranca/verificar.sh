@@ -22,11 +22,15 @@ IB=$(docker exec e5-router sh -c "ip -4 -o addr show | awk '/10.0.20.254\//{prin
 echo
 
 capturar(){ # $1=porta $2=arquivo
-  docker exec e5-router sh -c "rm -f /lab-cap/$2" 2>/dev/null
-  docker exec -d e5-router sh -c "mkdir -p /lab-cap; tcpdump -i $IB -n -s0 -w /lab-cap/$2 tcp port $1" 2>/dev/null
-  sleep 2
+  docker exec e5-router sh -c "pkill tcpdump 2>/dev/null; mkdir -p /lab-cap; rm -f /lab-cap/$2" 2>/dev/null
+  # O tcpdump encerra SOZINHO por tempo, em vez de ser morto por pkill. Matar a
+  # captura enquanto ela grava é uma corrida: em metade das execuções o arquivo
+  # saía com o cabeçalho e zero pacote, sem erro nenhum para explicar.
+  # -U grava cada pacote na hora, para o arquivo nunca mentir sobre o que já tem.
+  docker exec -d e5-router sh -c "timeout 9 tcpdump -i $IB -n -s0 -U -w /lab-cap/$2 tcp port $1" 2>/dev/null
+  sleep 3
 }
-parar(){ docker exec e5-router sh -c "pkill tcpdump" 2>/dev/null; sleep 1; }
+parar(){ sleep 7; }   # deixa o tcpdump chegar ao próprio fim e fechar o arquivo
 pacotes(){ docker exec e5-router sh -c "tcpdump -r /lab-cap/$1 2>/dev/null | wc -l" 2>/dev/null | tr -d ' '; }
 achou(){ docker exec e5-router sh -c "tcpdump -A -r /lab-cap/$1 2>/dev/null | grep -c '$TOKEN'" 2>/dev/null | tr -d ' '; }
 

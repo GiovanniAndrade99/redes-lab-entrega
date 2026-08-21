@@ -40,9 +40,16 @@ echo
 # --- a prova do encapsulamento: mesma carga IP, quadros Ethernet diferentes ---
 echo "  capturando nas duas pernas do roteador..."
 docker exec e2-router sh -c "rm -f /lab/*.pcap" 2>/dev/null
-docker exec -d e2-router sh -c "tcpdump -i $IA -n -e -c 4 -w /lab/perna-a.pcap icmp" 2>/dev/null
-docker exec -d e2-router sh -c "tcpdump -i $IB -n -e -c 4 -w /lab/perna-b.pcap icmp" 2>/dev/null
-sleep 2
+docker exec -d e2-router sh -c "tcpdump -i $IA -n -e -c 4 -U -w /lab/perna-a.pcap icmp" 2>/dev/null
+docker exec -d e2-router sh -c "tcpdump -i $IB -n -e -c 4 -U -w /lab/perna-b.pcap icmp" 2>/dev/null
+# Espera as DUAS capturas estarem ouvindo. Tempo fixo faz o ping sair antes do
+# tcpdump subir num contêiner novo, e a prova do encapsulamento some sem aviso.
+i=0
+while [ $i -lt 15 ]; do
+  docker exec e2-router sh -c "[ -f /lab/perna-a.pcap ] && [ -f /lab/perna-b.pcap ]" 2>/dev/null && break
+  i=$((i+1)); sleep 1
+done
+sleep 1
 docker exec e2-host-a1 ping -c3 -W2 10.0.20.10 >/dev/null 2>&1 || true
 sleep 2
 

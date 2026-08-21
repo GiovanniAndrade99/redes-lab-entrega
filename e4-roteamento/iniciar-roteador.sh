@@ -7,8 +7,8 @@ sysctl -w net.ipv4.ip_forward=1 2>/dev/null || true
 # Funciona: host-a alcança host-b pelo trânsito 1. Mas é uma decisão congelada
 # na mão de quem escreveu. Derrube o trânsito 1 e nada se refaz sozinho.
 case "$ROLE" in
-  r1) ip route add 10.0.20.0/24 via 10.0.30.2 ;;
-  r2) ip route add 10.0.10.0/24 via 10.0.30.1 ;;
+  r1) ip route add 10.0.20.0/24 via 10.0.30.12 ;;
+  r2) ip route add 10.0.10.0/24 via 10.0.30.11 ;;
 esac
 exec sleep infinity
 

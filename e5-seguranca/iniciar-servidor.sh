@@ -1,5 +1,7 @@
 #!/bin/sh
 ip route del default 2>/dev/null || true
+# Rota de VOLTA: sem ela o servidor recebe o pedido e não consegue responder.
+ip route add 10.0.10.0/24 via 10.0.20.254
 echo "area restrita do sistema" > /srv/index.html
 
 # Versão desprotegida, na porta 8080. Continua no ar de propósito: o trabalho
