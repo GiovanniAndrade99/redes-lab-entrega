@@ -33,11 +33,17 @@ for c in e1-host-a1 e1-host-a2 e1-srv-a e1-host-b1 e1-host-b2; do
       obs "o docker-compose.yml NEM DECLARA o serviço '$svc'"
       obs "confira a INDENTAÇÃO: nome de serviço leva 2 espaços, igual a 'host-a1' — com 4 o YAML o esconde dentro do serviço de cima, calado"
       obs "e confirme que você editou o arquivo DESTA pasta: $(pwd)"
+    elif ! docker inspect "$c" >/dev/null 2>&1; then
+      # Caso mais comum depois de editar o arquivo: o serviço já está declarado,
+      # mas o contêiner nunca foi criado porque o `up` não rodou de novo.
+      obs "o serviço ESTÁ declarado, mas o contêiner nunca foi criado"
+      obs "você editou o docker-compose.yml depois do último 'make up' — rode: make up E=1"
     else
-      # Sem isto, um servidor que morre na largada aparece só como um curl vazio
-      # lá embaixo — erro real, pista nenhuma.
+      # Contêiner existe e está parado: aí sim o log dele é a pista. Sem esta
+      # distinção, `docker logs` num contêiner inexistente devolve o erro do
+      # daemon e ele aparecia como se fosse a última saída do programa.
       log=$(docker logs --tail 2 "$c" 2>&1 | tr '\n' ' ')
-      [ -n "$log" ] && obs "última saída do contêiner: $log" || obs "declarado, mas não subiu — rode: make up E=1"
+      [ -n "$log" ] && obs "última saída do contêiner: $log" || obs "contêiner criado e parado, sem log"
     fi
   fi
 done
