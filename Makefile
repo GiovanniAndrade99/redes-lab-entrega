@@ -27,7 +27,8 @@ base:
 up: base
 	@test -n "$(DIR)" || (echo "Entrega E=$(E) não existe"; exit 1)
 	cd $(DIR) && $(COMPOSE) up -d
-	@echo "Topologia da entrega $(E) no ar. Rode: make verificar E=$(E)"
+	@echo "Topologia da entrega $(E) no ar, a partir de $(CURDIR)/$(DIR)"
+	@echo "Rode: make verificar E=$(E)"
 
 down:
 	cd $(DIR) && $(COMPOSE) down -v --remove-orphans

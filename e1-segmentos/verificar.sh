@@ -9,6 +9,16 @@ obs() { printf '        observado: %s\n' "$1"; }
 echo
 echo "=== ENTREGA 1 — dois segmentos e um serviço ==="
 echo
+# Qual arquivo estamos mesmo lendo, e o que ele declara. Sem isto, editar uma
+# pasta e rodar o make em outra (o --force_new_clone cria redes-lab-0, -1, -2…)
+# aparece só como "contêiner não existe", e a busca começa no lugar errado.
+DECL=$(docker compose config --services 2>/dev/null | tr '\n' ' ')
+echo "  arquivo lido:        $(pwd)/docker-compose.yml"
+echo "  serviços declarados: ${DECL:-<não consegui ler o arquivo>}"
+if [ -z "$DECL" ]; then
+  obs "$(docker compose config 2>&1 | head -2 | tr '\n' ' ')"
+fi
+echo
 
 for c in e1-host-a1 e1-host-a2 e1-srv-a e1-host-b1 e1-host-b2; do
   if docker inspect -f '{{.State.Running}}' "$c" 2>/dev/null | grep -q true; then
@@ -16,10 +26,19 @@ for c in e1-host-a1 e1-host-a2 e1-srv-a e1-host-b1 e1-host-b2; do
     ok "contêiner $c no ar"; obs "$ip"
   else
     nok "contêiner $c NÃO existe ou não está no ar"
-    # Sem isto, um servidor que morre na largada aparece só como um curl vazio
-    # lá embaixo — erro real, pista nenhuma.
-    log=$(docker logs --tail 2 "$c" 2>&1 | tr '\n' ' ')
-    [ -n "$log" ] && obs "última saída do contêiner: $log" || obs "o contêiner nem chegou a existir (make up E=1?)"
+    svc=${c#e1-}
+    if ! echo " $DECL " | grep -q " $svc "; then
+      # Causa mais provável, e a mais traiçoeira: o YAML ACEITA um nome de
+      # serviço indentado a mais e o engole dentro do serviço anterior, sem erro.
+      obs "o docker-compose.yml NEM DECLARA o serviço '$svc'"
+      obs "confira a INDENTAÇÃO: nome de serviço leva 2 espaços, igual a 'host-a1' — com 4 o YAML o esconde dentro do serviço de cima, calado"
+      obs "e confirme que você editou o arquivo DESTA pasta: $(pwd)"
+    else
+      # Sem isto, um servidor que morre na largada aparece só como um curl vazio
+      # lá embaixo — erro real, pista nenhuma.
+      log=$(docker logs --tail 2 "$c" 2>&1 | tr '\n' ' ')
+      [ -n "$log" ] && obs "última saída do contêiner: $log" || obs "declarado, mas não subiu — rode: make up E=1"
+    fi
   fi
 done
 echo
