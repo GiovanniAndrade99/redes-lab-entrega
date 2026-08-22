@@ -38,6 +38,28 @@ if docker run --rm --cap-add NET_ADMIN --sysctl net.ipv4.ip_forward=1 redes-lab-
   ok "sysctl net.ipv4.ip_forward por contêiner"
 else nok "ip_forward" "sysctl recusado — E2/E4/E5 não roteiam"; fi
 
+# O TESTE QUE FALTAVA. Ter as peças não é ter o comportamento: este autoteste já
+# aprovou 9/9 num ambiente onde as entregas 2 a 5 estavam quebradas, porque
+# nenhuma linha checava um pacote ATRAVESSANDO um roteador. Aqui ele atravessa.
+limpa_rota(){ docker rm -f at-r at-h at-s >/dev/null 2>&1; docker network rm at-a at-b >/dev/null 2>&1; }
+limpa_rota
+docker network create --subnet 10.99.1.0/24 at-a >/dev/null 2>&1
+docker network create --subnet 10.99.2.0/24 at-b >/dev/null 2>&1
+docker run -d --name at-r --cap-add NET_ADMIN --sysctl net.ipv4.ip_forward=1 \
+  --network at-a --ip 10.99.1.254 redes-lab-base:1 sleep 120 >/dev/null 2>&1
+docker network connect --ip 10.99.2.254 at-b at-r >/dev/null 2>&1
+docker run -d --name at-h --cap-add NET_ADMIN --network at-a --ip 10.99.1.10 redes-lab-base:1 \
+  sh -c 'ip route del default 2>/dev/null; ip route add 10.99.2.0/24 via 10.99.1.254; sleep 120' >/dev/null 2>&1
+docker run -d --name at-s --cap-add NET_ADMIN --network at-b --ip 10.99.2.10 redes-lab-base:1 \
+  sh -c 'ip route del default 2>/dev/null; ip route add 10.99.1.0/24 via 10.99.2.254; sleep 120' >/dev/null 2>&1
+sleep 4
+if docker exec at-h ping -c2 -W2 10.99.2.10 >/dev/null 2>&1; then
+  ok "um pacote ATRAVESSA um roteador entre dois segmentos"
+else
+  nok "roteamento entre segmentos" "o pacote não chega ao outro lado — quase sempre é o filtro de bridge (net.bridge.bridge-nf-call-iptables); rode 'make prep'"
+fi
+limpa_rota
+
 if docker run --rm redes-lab-base:1 sh -c 'apk add --no-cache bird >/dev/null 2>&1 && bird --version' >/dev/null 2>&1; then
   ok "pacote bird disponível no Alpine (E4)"
 else nok "bird" "sem pacote: E4 precisa de outro roteador dinâmico"; fi

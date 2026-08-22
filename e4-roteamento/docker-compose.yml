@@ -61,8 +61,8 @@ services:
       seg-t3: {ipv4_address: 10.0.50.13}
 
 networks:
-  seg-a:  {driver: bridge, internal: true, ipam: {config: [{subnet: 10.0.10.0/24}]}}
-  seg-b:  {driver: bridge, internal: true, ipam: {config: [{subnet: 10.0.20.0/24}]}}
-  seg-t1: {driver: bridge, internal: true, ipam: {config: [{subnet: 10.0.30.0/24}]}}
-  seg-t2: {driver: bridge, internal: true, ipam: {config: [{subnet: 10.0.40.0/24}]}}
-  seg-t3: {driver: bridge, internal: true, ipam: {config: [{subnet: 10.0.50.0/24}]}}
+  seg-a:  {driver: bridge, ipam: {config: [{subnet: 10.0.10.0/24}]}}
+  seg-b:  {driver: bridge, ipam: {config: [{subnet: 10.0.20.0/24}]}}
+  seg-t1: {driver: bridge, ipam: {config: [{subnet: 10.0.30.0/24}]}}
+  seg-t2: {driver: bridge, ipam: {config: [{subnet: 10.0.40.0/24}]}}
+  seg-t3: {driver: bridge, ipam: {config: [{subnet: 10.0.50.0/24}]}}

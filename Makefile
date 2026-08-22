@@ -11,7 +11,7 @@ DIR := $(firstword $(wildcard e$(E)-*))
 # Cloud Shell usa o plugin v2 (`docker compose`); algumas máquinas têm o v1.
 COMPOSE := $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
 
-.PHONY: base up down verificar evidencias limpar ajuda autoteste
+.PHONY: base prep up down verificar evidencias limpar ajuda autoteste
 
 ajuda:
 	@echo "make base            constrói a imagem redes-lab-base:1"
@@ -24,7 +24,20 @@ ajuda:
 base:
 	docker build -t redes-lab-base:1 base/
 
-up: base
+# O Cloud Shell carrega o br_netfilter com bridge-nf-call-iptables=1: quadros
+# COMUTADOS passam a atravessar o iptables e, com as cadeias do Docker 28+, o
+# pacote que sai de um segmento com destino em outro é descartado ANTES de
+# chegar ao roteador. O ping falha e nenhum contador de regra se move, o que
+# torna o defeito quase indiagnosticável. Desligar devolve a comutação normal.
+prep:
+	@if [ -f /proc/sys/net/bridge/bridge-nf-call-iptables ] && \
+	    [ "$$(cat /proc/sys/net/bridge/bridge-nf-call-iptables)" = "1" ]; then \
+	  sudo sysctl -w net.bridge.bridge-nf-call-iptables=0 >/dev/null 2>&1 \
+	    && echo "filtro de bridge desligado (o roteamento entre segmentos depende disto)" \
+	    || echo "AVISO: nao consegui desligar net.bridge.bridge-nf-call-iptables — as entregas 2 a 5 vao falhar"; \
+	fi
+
+up: prep base
 	@test -n "$(DIR)" || (echo "Entrega E=$(E) não existe"; exit 1)
 	@# As entregas reaproveitam as mesmas sub-redes (10.0.10.0/24 etc.) e o Docker
 	@# recusa duas bridges com faixas sobrepostas. Derrubamos as outras antes de
@@ -52,5 +65,5 @@ limpar:
 	-@for d in e1-* e2-* e3-* e4-* e5-*; do (cd $$d && $(COMPOSE) down -v --remove-orphans 2>/dev/null); done
 	-@docker network prune -f
 
-autoteste:
+autoteste: prep
 	@sh autoteste.sh

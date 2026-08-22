@@ -33,5 +33,5 @@ services:
       seg-b: {ipv4_address: 10.0.20.254}
 
 networks:
-  seg-a: {driver: bridge, internal: true, ipam: {config: [{subnet: 10.0.10.0/24}]}}
-  seg-b: {driver: bridge, internal: true, ipam: {config: [{subnet: 10.0.20.0/24}]}}
+  seg-a: {driver: bridge, ipam: {config: [{subnet: 10.0.10.0/24}]}}
+  seg-b: {driver: bridge, ipam: {config: [{subnet: 10.0.20.0/24}]}}
