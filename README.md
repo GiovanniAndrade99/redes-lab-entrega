@@ -113,3 +113,4 @@ git clone <repo-do-grupo> && cd <repo> && make up E=2 && make verificar E=2
 
 Os roteiros imprimem o valor observado em cada ponto, não só passou/falhou —
 dá para corrigir lendo a saída.
+# redes-lab-entrega

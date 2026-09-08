@@ -39,19 +39,20 @@ services:
         exec httpd -f -p 8080 -h /srv
     networks: {seg-a: {ipv4_address: 10.0.10.20}}
 
-  # ------------------------------------------------------------------
-  # TAREFA DO GRUPO: dois hosts no segmento B (10.0.20.0/24).
-  # Os nomes de contêiner DEVEM ser e1-host-b1 e e1-host-b2,
-  # porque é assim que verificar.sh procura por eles.
-  # Copie o padrão de host-a1 e ajuste rede e endereço.
-  # ------------------------------------------------------------------
+  host-b1:
+    <<: *host
+    container_name: e1-host-b1
+    networks: {seg-b: {ipv4_address: 10.0.20.10}}
+
+  host-b2:
+    <<: *host
+    container_name: e1-host-b2
+    networks: {seg-b: {ipv4_address: 10.0.20.11}}
 
 networks:
   seg-a:
     driver: bridge
-
     ipam: {config: [{subnet: 10.0.10.0/24}]}
   seg-b:
     driver: bridge
-
     ipam: {config: [{subnet: 10.0.20.0/24}]}
