@@ -1,17 +1,3 @@
-# ENTREGA 2 — O roteador e o encapsulamento
-#
-# O roteador já está no ar, com uma perna em cada segmento e o repasse ligado.
-# Mesmo assim nada atravessa: falta ROTA nos hosts.
-#
-# TAREFA DO GRUPO: dar a host-a1 e a host-b1 a rota para a sub-rede do outro
-# lado, dentro do `command` (infraestrutura como código — nada de digitar no
-# terminal e perder na próxima sessão).
-#   Exemplo do que falta acrescentar:  ip route add <rede> via <roteador>
-#
-# host-a2 fica DE PROPÓSITO sem rota. Ele é o grupo de controle: mesma
-# topologia, mesma máquina, só muda a configuração. Se host-a2 passasse a
-# alcançar o outro lado sozinho, a prova não valeria nada.
-
 name: e2
 
 x-host: &host
@@ -23,6 +9,7 @@ services:
   host-a1:
     <<: *host
     container_name: e2-host-a1
+    command: ["sh","-c","ip route del default 2>/dev/null || true; ip route add 10.0.20.0/24 via 10.0.10.254; exec sleep infinity"]
     networks: {seg-a: {ipv4_address: 10.0.10.10}}
 
   host-a2:                       # controle — NÃO acrescente rota aqui
@@ -33,6 +20,7 @@ services:
   host-b1:
     <<: *host
     container_name: e2-host-b1
+    command: ["sh","-c","ip route del default 2>/dev/null || true; ip route add 10.0.10.0/24 via 10.0.20.254; exec sleep infinity"]
     networks: {seg-b: {ipv4_address: 10.0.20.10}}
 
   router:
@@ -54,9 +42,7 @@ services:
 networks:
   seg-a:
     driver: bridge
-
     ipam: {config: [{subnet: 10.0.10.0/24}]}
   seg-b:
     driver: bridge
-
     ipam: {config: [{subnet: 10.0.20.0/24}]}
