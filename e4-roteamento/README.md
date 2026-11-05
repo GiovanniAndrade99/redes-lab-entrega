@@ -2,7 +2,7 @@
 
 ## Tempo de convergência medido
 
-Na nossa execução, a rede levou **[TEMPO] segundos** para voltar a alcançar `host-b` depois de o trânsito 1 ser derrubado nas duas pontas, convergindo para o desvio de dois saltos por `r3` (confirmado pela mudança do próximo salto em `r1`, de `10.0.30.12` para `10.0.40.13`).
+Na nossa execução, a rede levou **17 segundos** para voltar a alcançar `host-b` depois de o trânsito 1 ser derrubado nas duas pontas, convergindo para o desvio de dois saltos por `r3` (confirmado pela mudança do próximo salto em `r1`, de `10.0.30.12` para `10.0.40.13`).
 
 ## E com 50 roteadores em vez de 3?
 
